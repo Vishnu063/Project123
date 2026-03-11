@@ -1,32 +1,47 @@
 pipeline {
     agent any
-    
+
     environment {
-        DOCKER_IMAGE = 'vishnu063/streamlit-app'
+        DOCKER_IMAGE = 'your-dockerhub-username/streamlit-app'
         DOCKER_TAG = "${env.BUILD_ID}"
     }
-    
+
     stages {
         stage('Checkout') {
             steps {
-                git url: 'https://github.com/Vishnu063/Project123.git', branch: 'master'
+                checkout scm
             }
         }
-        
-        stage('Build') {
+
+        stage('Build Docker Image') {
             steps {
-                sh 'docker build -t ${DOCKER_IMAGE}:${DOCKER_TAG} .'
-                sh 'docker tag ${DOCKER_IMAGE}:${DOCKER_TAG} ${DOCKER_IMAGE}:latest'
+                script {
+                    docker.build("${DOCKER_IMAGE}:${DOCKER_TAG}")
+                }
             }
         }
-        
+
+        stage('Push to Docker Hub') {
+            steps {
+                script {
+                    docker.withRegistry('', 'docker-hub-credentials') { 
+                        docker.image("${DOCKER_IMAGE}:${DOCKER_TAG}").push()
+                        docker.image("${DOCKER_IMAGE}:${DOCKER_TAG}").push('latest')
+                    }
+                }
+            }
+        }
+
         stage('Deploy') {
             steps {
-                sh '''
-                    docker stop streamlit-app || true
-                    docker rm streamlit-app || true
-                    docker run -d -p 8501:8501 --name streamlit-app ${DOCKER_IMAGE}:latest
-                '''
+                script {
+                    // Example: Stop and remove old container, run new one
+                    sh '''
+                        docker stop streamlit-app || true
+                        docker rm streamlit-app || true
+                        docker run -d --name streamlit-app -p 8501:8501 ${DOCKER_IMAGE}:${DOCKER_TAG}
+                    '''
+                }
             }
         }
     }
