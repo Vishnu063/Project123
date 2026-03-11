@@ -2,8 +2,8 @@ pipeline {
     agent any
     
     environment {
-        DOCKER_IMAGE = 'your-dockerhub-username/streamlit-app'
-        DOCKER_TAG = "${env.BUILD_ID}"
+DOCKER_IMAGE = 'vishnu063/streamlit-app'
+DOCKER_TAG = "${env.BUILD_ID}"
     }
     
     stages {
